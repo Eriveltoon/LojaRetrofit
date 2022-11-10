@@ -6,7 +6,9 @@ import androidx.appcompat.app.AlertDialog
 import com.example.lojaretrofit.R
 import com.example.lojaretrofit.api.ProdutoApi
 import com.example.lojaretrofit.databinding.ActivityMainBinding
+import com.example.lojaretrofit.databinding.ItemProdutoBinding
 import com.example.lojaretrofit.model.Produto
+import com.squareup.picasso.Picasso
 import retrofit2.*
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -39,12 +41,18 @@ class MainActivity : AppCompatActivity() {
         val callback = object : Callback<List<Produto>>{
             //Chegou no back-end, teve uma resposta do back-end mas pode ser sucesso ou erro
             override fun onResponse(call: Call<List<Produto>>, response: Response<List<Produto>>) {
+                //isSuccessful quando retorna 200 do laravel, verificacao no laravel para o cod de retorno
                 if(response.isSuccessful){
+
+
                     val listaProduto = response.body()
 
-                    val nomeProduto = listaProduto?.first()?.nomeProduto
+                    //nao precisa mais das 2 linhas abaixo pq ja fez de forma dinamica
+                    //val nomeProduto = listaProduto?.first()?.nomeProduto
 
-                    alert("Sucesso", "Nome do primeiro Produto: $nomeProduto")
+                    //alert("Sucesso", "Nome do primeiro Produto: $nomeProduto")
+
+                    mostrarProdutos(listaProduto)
                 }else{
                     alert("Erro",response.code().toString())
                 }
@@ -60,6 +68,31 @@ class MainActivity : AppCompatActivity() {
         //5 - Executar a chamada
         //enqueue equivalente subscribe (Angular)
         chamada.enqueue(callback)
+    }
+
+    //Funcao dos elementos dinamicos
+    fun mostrarProdutos(listaProdutos: List<Produto>?)
+    {
+        //0 - Iterar (passar) pelos produtos
+        //substitui o it = nome ->
+        listaProdutos?.forEach {
+
+            //1 - Inflar o layout do item da lista
+            //chamando o XML item_produto
+            val itemProduto = ItemProdutoBinding.inflate(layoutInflater)
+
+            //2 - Configurar as views(componentes) com os dados do backend
+            itemProduto.textNome.text = it.nomeProduto
+            itemProduto.textPreco.text = it.precProduto.toString()
+
+            //2.5 - Obter imagem do item
+            //utilizar biblioteca Picasso
+            Picasso.get().load("https://oficinacordova.azurewebsites.net/android/rest/produto/image/${it.idProduto}").into(itemProduto.imageView)
+
+            //3 - Adicionar o layout no container
+            //itemProduto.root pega a tela que esta dentro do binding
+            binding.container.addView(itemProduto.root)
+        }
     }
 
     fun alert(titulo: String, msg: String){
